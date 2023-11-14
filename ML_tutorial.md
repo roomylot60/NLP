@@ -26,7 +26,7 @@
         + Sigmoid Function : x, y간의 관계에서 y값이 0과 1사이의 값을 가지면서 S자 형태로 그려지는 함수 ![Sigmoid Function](./img/sigmoid.jpg)
         + Cross Entropy : 가중치 w를 최소로하는 비용함수를 만들 때, y값이 0일 때와 1일 때에 대한 값을 고려하여 생성한 Objective Function ![Cross Entropy](./img/Cross_Entropy.jpg)
     * Softmax Regression : 3개 이상의 선택지에 대한 다중 클래스 분류 문제에 사용
-        * Softmax Function : 선택지의 수 k에 대해 k차원의 벡터를 입력받아 각 클래스에 대한 확률을 추정 ![softmax Function](./img/softmax.jpg)
+        + Softmax Function : 선택지의 수 k에 대해 k차원의 벡터 z를 입력받아 각 클래스에 대한 확률을 추정 ![softmax Function](./img/softmax.jpg)<br> 입력값으로 들어오는 독립변수 x의 차원수가 m 일 때, 이를 k 차원으로 축소시키는 작업이 필요(가중치 벡터 `m x k`)하고 이 때의 비용 함수는 Cross Entropy 함수 ![Cross Entropy in Softmax](./img/Cross_Entropy_SF.jpg)
 - Supervised Learning(지도 학습) : Lable(정답)과 함께 학습
     * Self-Supervised Learning(자기지도 학습) : 레이블이 없는 데이터가 주어지면, 모델이 학습을 위해서 스스로 데이터로부터 레이블을 만들어서 학습
 - Unsupervised Learning(비지도 학습) : 별도의 레이블 없이 학습
