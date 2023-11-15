@@ -59,3 +59,99 @@
     - L1 regularization : 가중치 w들의 절댓값의 합을 비용함수에 추가
     - L2 regularization : 모든 가중치 w들의 제곱합을 비용함수에 추가
 4. Dropout : 학습 과정에서 설정한 비율로 랜덤한 신경망을 사용하지 않는 방법으로, 특정 뉴런 또는 특정 조합에 너무 의존적으로 되는 것을 방지
+
+---
+
+## Keras
+### Preprocessing
+- Tokenizer() : 토큰화, 정수 인코딩을 통해 단어 집합 생성
+```python
+from tensorflow.keras.preprocessing.text import Tokenizer
+
+tokenizer = Tokenizer()
+train_text = "The earth is an awesome place live"
+
+# Vocabulary dictionary
+tokenizer.fit_on_texts([train_text])
+
+# Index encoding
+sub_text = "The earth is an great place live"
+sequences = tokenizer.texts_to_sequences([sub_text])[0]
+
+print("Encoding : ", sequences)
+print("Vocabulary Set : ", tokenizer.word_index)
+```
+
+```bash
+정수 인코딩 :  [1, 2, 3, 4, 6, 7]
+단어 집합 :  {'the': 1, 'earth': 2, 'is': 3, 'an': 4, 'awesome': 5, 'place': 6, 'live': 7}
+```
+- pad_sequences() : 샘플의 길이가 서로 다를 때, padding을 거쳐 필요한 부분을 0으로, 필요없는 부분은 제거하여 동일하게 맞춤
+```python
+from tensorflow.keras.preprocessing.sequence import pad_sequence
+
+print(pad_sequences([[1,2,3],[3,4,5,6],[7,8]], maxlen=3, padding='pre'))
+```
+
+```bash
+[[1 2 3]
+ [4 5 6]
+ [0 7 8]]
+```
+- Word Embedding : 텍스트 내의 단어들을 dense vector로 변환하는 것으로, 학습을 통해 값이 변화 ![One-hot VS Embedding](./img/one_hot_vs_w_embedding.jpg)
+    * Embedding(vocab_size, embedding_dim, input_length) : 단어를 밀집 벡터로 변환(embedding layer 생성)
+- Modeling
+    * Sequential() : 모델에서 사용할 layer 생성을 위한 선언
+    * Dense(output_dim, input_dim, activation_function) : layer 추가 시, 해당 layer의 정보
+    ```python
+    from tensorflow.keras.models import Sequential
+
+    model = Sequential()
+    model.add(Embedding(8, 4, input_length=3)) # Adding embedding layer
+    model.add(Dense(5, input_dim=4, activation='relu')) # Adding fully-connected layer
+    model.add(Dense(1, activation='sigmmoid')) # Adding output layer pass 2nd parameter as you declared pre-layer output_dim,  5.
+    ```
+    * summary() : 모델의 정보를 요약
+- Compile & Training
+    * compile(optimizer, loss, metrics) : 모델을 기계가 이해할 수 있도록 loss_functino, optimizer, matric_function(평가 지표 함수)의 정보와 함께 compile
+    * fit(train_data, label_data, epochs, batch_size, (validation_data,) verbose, validation_split) : 모델의 학습을 진행
+        + validation_data(x_val, y_val) : 검증 데이터를 활용
+        + validation_split : 훈련 데이터의 일정 비율을 검증 데이터로 활용
+        + verbose : 1일 때, 훈련의 진행도를 나타내는 진행 막대 표시, 2일 때, 미니 배치마다 손실 정보를 출력
+    ```python
+    from tensorflow.keras.layers import SimpleRNN, Embedding, Dense
+    from tensorflow.keras.models import Sequential
+
+    vocab_size = 10000
+    embedding_dim = 32
+    hidden_units= 32
+
+    # Declare Model
+    model = Sequential()
+    model.add(Embedding(vocab_size, embedding_dim))
+    model.add(SimpleRNN(hidden_units))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
+    
+    # Training
+    model.fit(X_train, y_train, epochs=10, batch_size=32, verbose=0, validation_split=0.2)
+    
+    # Evaluation
+    model.evaluate(X_test, y_test, batch_size=32)
+
+    # Prediction
+    model.predict(X_input, batch_size=32)
+
+    # Save
+    model.save("model_name.h5")
+
+    # Load
+    from tensorflow.keras.models import load_model
+    model2 = load_model("model_name.h5")
+    ```
+- Evaluation & Prediction
+    * evaluate(test_data, test_label, batch_size)
+    * predict(data, batch_size)
+- Save & Load
+    * save("model_path + model_name") : hdf5 file로 저장
+    * load_model("model_path + model_name") : 저장 된 모델 로드
