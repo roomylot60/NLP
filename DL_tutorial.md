@@ -63,41 +63,46 @@
 ---
 
 ## Keras
-### Preprocessing
-- Tokenizer() : 토큰화, 정수 인코딩을 통해 단어 집합 생성
-```python
-from tensorflow.keras.preprocessing.text import Tokenizer
+- Preprocessing
+    * Tokenizer() : 토큰화, 정수 인코딩을 통해 단어 집합 생성
+    ```python
+    from tensorflow.keras.preprocessing.text import Tokenizer
 
-tokenizer = Tokenizer()
-train_text = "The earth is an awesome place live"
+    tokenizer = Tokenizer()
+    train_text = "The earth is an awesome place live"
 
-# Vocabulary dictionary
-tokenizer.fit_on_texts([train_text])
+    # Vocabulary dictionary
+    tokenizer.fit_on_texts([train_text])
 
-# Index encoding
-sub_text = "The earth is an great place live"
-sequences = tokenizer.texts_to_sequences([sub_text])[0]
+    # Index encoding
+    sub_text = "The earth is an great place live"
+    sequences = tokenizer.texts_to_sequences([sub_text])[0]
 
-print("Encoding : ", sequences)
-print("Vocabulary Set : ", tokenizer.word_index)
-```
+    print("Encoding : ", sequences)
+    print("Vocabulary Set : ", tokenizer.word_index)
+    ```
 
-```bash
-정수 인코딩 :  [1, 2, 3, 4, 6, 7]
-단어 집합 :  {'the': 1, 'earth': 2, 'is': 3, 'an': 4, 'awesome': 5, 'place': 6, 'live': 7}
-```
-- pad_sequences() : 샘플의 길이가 서로 다를 때, padding을 거쳐 필요한 부분을 0으로, 필요없는 부분은 제거하여 동일하게 맞춤
-```python
-from tensorflow.keras.preprocessing.sequence import pad_sequence
+    ```bash
+    정수 인코딩 :  [1, 2, 3, 4, 6, 7]
+    단어 집합 :  {'the': 1, 'earth': 2, 'is': 3, 'an': 4, 'awesome': 5, 'place': 6, 'live': 7}
+    ```
+    - texts_to_matrix() : 입력된 텍스트 데이터를 행렬로 변환
+        * binary : 해당 단어의 존재 여부
+        * count : DTM 생성
+        * freq : 각 문서에서 각 단어의 등장 횟수 / 각 문서의 모든 단어의 개수
+        * tfidf : TF-IDF 행렬 생성
+    - pad_sequences() : 샘플의 길이가 서로 다를 때, padding을 거쳐 필요한 부분을 0으로, 필요없는 부분은 제거하여 동일하게 맞춤
+    ```python
+    from tensorflow.keras.preprocessing.sequence import pad_sequence
 
-print(pad_sequences([[1,2,3],[3,4,5,6],[7,8]], maxlen=3, padding='pre'))
-```
+    print(pad_sequences([[1,2,3],[3,4,5,6],[7,8]], maxlen=3, padding='pre'))
+    ```
 
-```bash
-[[1 2 3]
- [4 5 6]
- [0 7 8]]
-```
+    ```bash
+    [[1 2 3]
+    [4 5 6]
+    [0 7 8]]
+    ```
 - Word Embedding : 텍스트 내의 단어들을 dense vector로 변환하는 것으로, 학습을 통해 값이 변화 ![One-hot VS Embedding](./img/one_hot_vs_w_embedding.jpg)
     * Embedding(vocab_size, embedding_dim, input_length) : 단어를 밀집 벡터로 변환(embedding layer 생성)
 - Modeling
@@ -155,3 +160,92 @@ print(pad_sequences([[1,2,3],[3,4,5,6],[7,8]], maxlen=3, padding='pre'))
 - Save & Load
     * save("model_path + model_name") : hdf5 file로 저장
     * load_model("model_path + model_name") : 저장 된 모델 로드
+
+### Functional API
+Layer 생성에 있어서 각 층을 일종의 함수로서 정의하고 연산자를 통해 신경망을 설계
+- FFNN
+```python
+from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.models import Model
+
+inputs = Input(shape=(10,)) # 10개의 입력을 받는 입력층
+hidden1 = Dense(64, activation='relu')(inputs)
+hidden2 = Dense(64, activation='relu')(hidden1)
+output = Dense(1, activation='sigmoid')(hidden2) # input->hidden1->hidden2->ouptut 으로 구성
+
+# 모델 생성 및 학습 진행
+model = Model(inputs=inputs, ouputs=output)
+model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['acc'])
+model.fit(data, labels)
+```
+- Linear Regression
+```python
+from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras import optimizers
+from tensorflow.keras.models import Model
+
+X = [1, 2, 3, 4, 5, 6, 7, 8, 9] # 공부하는 시간
+y = [11, 22, 33, 44, 53, 66, 77, 87, 95] # 각 공부하는 시간에 맵핑되는 성적
+
+inputs = Input(shape=(1,))
+output = Dense(1, activation='linear')(inputs)
+linear_model = Model(inputs, output)
+
+sgd = optimizers.SGD(lr=0.01)
+
+linear_model.compile(optimizer=sgd, loss='mse', metrics=['mse'])
+linear_model.fit(X, y, epochs=300)
+```
+
+- Logistic Regression
+```python
+from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.models import Model
+
+inputs = Input(shape=(3,))
+output = Dense(1, activation='sigmoid')(inputs)
+logistic_model = Model(inputs, output)
+```
+- RNN;Recurrence Neural Network -> 은닉층 생성
+```python
+from tensorflow.keras.layers import Input, Dense, LSTM
+from tensorflow.keras.models import Model
+
+inputs = Input(shape=(50,1))
+lstm_layer = LSTM(10)(inputs)
+x = Dense(10, activation='relu')(lstm_layer)
+output = Dense(1, activation='sigmoid')(x)
+
+model = Model(inputs=inputs, outputs=output)
+```
+
+### Sub-Classing API
+- Linear Regression
+```python
+import tensorflow as tf
+
+# 선형 회귀에 대한 class 정의
+class LinearRegression(tf.keras.Model):
+    # 모델의 구조 및 동작을 정의하는 생성자 정의
+    def __init__(self):
+        super(LinearRegression, self).__init__()
+        self.linear_layer = tf.keras.layers.Dense(1, input_dim=1, activation='linear')
+
+    # 데이터를 입력 받아 예측값을 리턴하는 forward 연산
+    def call(self, x):
+        y_pred = self.linear_layer(x)
+        return y_pred
+
+# 모델 생성
+model = LinearRegression()
+
+# 데이터
+X = [1, 2, 3, 4, 5, 6, 7, 8, 9] # 공부하는 시간
+y = [11, 22, 33, 44, 53, 66, 77, 87, 95] # 각 공부하는 시간에 맵핑되는 성적
+
+sgd = tf.keras.optimizers.SGD(lr=0.01)
+model.compile(optimizer=sgd, loss='mse', metrics=['mse'])
+model.fit(X, y, epochs=300)
+```
+
+---
