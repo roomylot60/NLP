@@ -249,3 +249,134 @@ model.fit(X, y, epochs=300)
 ```
 
 ---
+## Recurrent Neural Network;RNN
+- RNN : 입력과 출력을 sequence(묶음) 단위로 처리하는 모델
+### 순환 신경망
+- FFNN : 은닉층에서 활성화 함수를 거친 값이 출력층 방향으로만 진행
+- RNN : 은닉층에서 활성화 함수를 거친 값이 출력층 혹은 은닉층 노드로 진행
+    * Memory Cell;RNN Cell : 은닉층에서 activation function을 거친 값을 내보내면서 이전 시점의 값을 기억하고 이를 입력으로 사용하는 노드
+    * Hidden State : t시점의 메모리 셀이 t+1 시점으로 보내는 값
+    * RNN Architecture : 각 시점에서 입력과 출력이 동시 혹은 하나만 이루어 지는지에 따라 모델의 종류(구조)가 변함 ![RNN Models](./img/rnn_models.jpg)
+        + One-to-Many : Image Captioning
+        + Many-to-One : Sentiment Classification, Spam Detection
+        + Many-to-Many : Chatbot, Translator, Tagging task
+### RNN with Keras
+```python
+from tensorflow.keras.layers import SimpleRNN
+
+# 추가 인자를 활용한 RNN 층 생성
+model.add(SimpleRNN(hidden_units, input_shape=(timesteps, input_dim)))
+# model.add(SimpleRNN(hidden_units, input_length=M, input_dim=N)) # 다른 표기
+```
+- hidden_units : 은닉 상태의 크기를 정의; 메모리 셀이 다음 시점의 메모리 셀과 출력층으로 보내는 값의 크기(ouptut_dim)
+- timesteps : 입력 시퀀스의 길이(input_length)
+- input_dim : 입력 벡터의 차원 수
+- RNN example
+```python
+import numpy as np
+
+timestpes = 10
+input_dim = 4
+hidden_units = 8
+
+inputs = np.random.random((timestpes, input_dim))
+hidden_state_t = np.zeros((hidden_units,))
+print("Initial :", hidden_state_t)
+
+Wx = np.random.random((hidden_units, input_dim))
+Wh = np.random.random((hidden_units, hidden_units))
+b = np.random.random((hidden_units,))
+print("Wx, Wh, b : {}\n\n{}\n\n{}\n\n".format(Wx, Wh, b))
+print("Wx, Wh, b shapes : ",np.shape(Wx), np.shape(Wh), np.shape(b))
+print("\n")
+total_hidden_states = []
+
+# dot(arr1, arr2) : 벡터 계산 (arr1, arr2의 원소값들의 곱의 합)
+for input_t in inputs:
+    output_t = np.tanh(np.dot(Wx, input_t) + np.dot(Wh, hidden_state_t))
+    total_hidden_states.append(list(output_t))
+
+total_hidden_states = np.stack(total_hidden_states, axis=0)
+print(total_hidden_states)
+```
+- output
+```bash
+Initial : [0. 0. 0. 0. 0. 0. 0. 0.]
+Wx, Wh, b : [[0.85143664 0.97714713 0.65502162 0.28371238]
+ [0.30802615 0.09059362 0.1076857  0.25372438]
+ [0.28704896 0.60082044 0.75228122 0.68312046]
+ [0.68097992 0.80925337 0.0645649  0.12324691]
+ [0.38990914 0.92962164 0.10098862 0.67962663]
+ [0.94462422 0.01337485 0.03662331 0.03050986]
+ [0.28653855 0.32739224 0.49828274 0.82087065]
+ [0.96042989 0.83653596 0.07487261 0.09113481]]
+
+[[0.68096678 0.58803731 0.57988288 0.92890096 0.09135938 0.99057804
+  0.01872872 0.4546827 ]
+ [0.13087967 0.76399839 0.56236402 0.69592914 0.36460709 0.72990083
+  0.45858138 0.00552776]
+ [0.55843321 0.64096323 0.53645843 0.79040003 0.42508579 0.30223451
+  0.5627866  0.86003013]
+ [0.4413374  0.97321599 0.84578887 0.25420944 0.73637994 0.391908
+  0.17252162 0.76213319]
+ [0.06361856 0.73890545 0.58717524 0.45134905 0.05404353 0.4730816
+  0.55602838 0.81121357]
+ [0.56893496 0.79008566 0.87842282 0.00705078 0.06712543 0.27438764
+  0.40791329 0.50191709]
+ [0.18485617 0.67680875 0.32107997 0.67353141 0.58586511 0.80557961
+  0.9308333  0.33228672]
+ [0.58482391 0.67038387 0.61891013 0.40433411 0.7752712  0.49077138
+  0.22612616 0.23695048]]
+
+[0.77085078 0.46451979 0.05440115 0.82049665 0.09553835 0.78358678
+ 0.47607443 0.87411462]
+
+
+Wx, Wh, b shapes :  (8, 4) (8, 8) (8,)
+
+
+[[0.9311158  0.28819712 0.81778765 0.79569775 0.80725949 0.42711984
+  0.64165978 0.84558929]
+ [0.93584739 0.33438469 0.79853643 0.8403642  0.84959694 0.54169853
+  0.64857779 0.88908515]
+ [0.89903488 0.45231785 0.85710553 0.67561648 0.77069602 0.63738225
+  0.81731435 0.77063852]
+ [0.75156127 0.33641803 0.63492503 0.51016977 0.51385085 0.59919868
+  0.59905286 0.63723528]
+ [0.88905473 0.44012962 0.8013277  0.70813697 0.75661072 0.68661386
+  0.76037359 0.80598781]
+ [0.95834118 0.44270473 0.89593064 0.82501953 0.8508026  0.65423909
+  0.80873311 0.88625939]
+ [0.93018297 0.50930848 0.90068338 0.78150259 0.8930009  0.63937644
+  0.8779043  0.84691315]
+ [0.82701004 0.24378468 0.78295419 0.45492988 0.48932459 0.31174412
+  0.63485924 0.52788644]
+ [0.9632202  0.51884557 0.91992141 0.85340389 0.90910772 0.70188364
+  0.87507954 0.90729884]
+ [0.89504751 0.38634984 0.83208148 0.62738128 0.65260641 0.60001641
+  0.74679467 0.73196294]]
+```
+
+- Deep RNN : 은닉층의 개수가 복수인 경우
+```python
+model = Sequential()
+# 첫번째 은닉층을 정의할 때, 각 시점의 값을 다음 은닉층으로 값을 전달하기 위해 retrun_sequences 값을 True로 설정
+model.add(SimpleRNN(hidden_units, input_length=10, input_dim=5, return_sequences=True))
+model.add(SimpleRNN(hidden_units, return_sequences=True))
+```
+- Biodirectional RNN : 시점 t에서의 출력값을 예측할 때, 이전 시점의 입력뿐만 아니라, 이후 시점의 입력 또한 에측에 기여할 수 있다는 아이디어를 기반으로 기본적으로는 두 개의 메모리 셀을 사용하여 첫번째에서는 Forward States를, 두번째에서는 Backward States를 전달 받아 은닉상태를 계산
+
+### Long Short-Term Memory;LSTM
+- The problem of long-term dependencies : Vanila RNN은   비교적 짧은 시퀀스에 대해서만 효과를 보임(시점이 길어질 수록 앞의 정보가 뒤로 충분히 전달되지 못하는 현상 발생)
+- LSTM : 은닉층의 메모리 셀에 입력 게이트, 망각 게이트, 출력 게이트를 추가하여 불필요한 기억은 지우고, 기억해야할 것들을 선정 ![LSTM](./img/LSTM_architecture.jpg)
+    * Cell state : 이전 시점의 셀 상태가 다음 시점의 셀 상태를 구하기 위한 입력으로 사용, 삭제 게이트의 값이 0에 가까울 수록 이전 시점의 셀 상태값의 영향력이 작아지고, 입력 게이트의 값이 현 시점의 셀 상태에 영향을 미침(`C_t = f_tㅇC_(t-1) + i_tㅇg_t`) 
+        + Entrywise product : 두 행렬에서 같은 위치의 성분끼리의 곱을 통해 얻어지는 행렬
+    * 입력 게이트 : 현재 정보를 기억하기 위한 게이트(`i_t = sigmoid(x_t*W_(xi) + h_(t-1)*W_(hi)), g_t = tanh(x_t*W_(xg)+h_(t-1)*W_(hg))`)
+    * 삭제 게이트(망각 게이트) : 이전 시점의 입력을 얼마나 반영할 지를 결정, 기억을 삭제하기 위한 게이트로 0에 가까울 수록 많이 제거된 상태(`f_t = sigmoid(x_t*W_(xf) + h_(t-1)*W_(hf))`)
+    * 출력 게이트 : 현재 시점의 x값과 이전 시점의 은닉 상태가 시그모이드 함수를 지난 값으로 현재 시점의 은닉 상태를 결정(`o_t = sigmoid(x_t*W_(xo)+h_(t-1)*W_(ho)), h_t = o_tㅇtanh(c_t)`)
+
+### Gated Recurrent Unit;GRU
+- GRU : LSTM에서 3개의 게이트를 사용했던 반면, GRU에서는 업데이트 게이트, 리셋 게이트 2개를 사용하여 LSTM의 구조를 간략화 ![GRU](./img/GRU.jpg)
+
+### RNN Language Model
+- Teacher Forcing(교사 강요) : 테스트 과정에서 t시점의 출력값이 t+1시점의 입력값으로 들어가도록 하는 RNN model에서, 훈련 과정 중에는 입력에 대한 예측값을 입력으로 하지 않고, 이미 정답을 알고 있는 레이블을 기반으로 훈련하여 훈련 과정을 단축하는 기법, 활성화 함수로는 softmax, 손실 함수로는 cross entropy를 사용
