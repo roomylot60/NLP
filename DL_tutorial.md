@@ -247,13 +247,26 @@ sgd = tf.keras.optimizers.SGD(lr=0.01)
 model.compile(optimizer=sgd, loss='mse', metrics=['mse'])
 model.fit(X, y, epochs=300)
 ```
-
 ---
+
+## Neural Network Language Model;NNLM(신경망 언어 모델)
+- NNLM : 자연어 학습에 대해 과거의 통계적인 접근방식(SLM)이 아닌, 인공 신경망을 사용하는 방식으로(ex - FFNNLM, RNNLM, BiLM)
+    * 앞의 모든 단어를 참고하는 것이 아니라 정해진 개수의 단어(window)만을 참고하여 해당 window의 one-hot vector를 생성
+    * 입력된 one-hot vector들을 은닉층 중 활성화 함수가 존재하지 않는 투사층(projection layer)에서 가중치 행렬과 곱하여 lookup table을 생성
+    * Lookup table의 값은 최초에는 랜덤한 값을 가지지만 학습을 거치면서 값이 변경
+    * 테이블의 각각의 값, Embedding vector는 은닉층을 거쳐 활성화 함수를 통해 window의 크기;`V`와 같은 차원의 벡터를 출력
+    * 출력층에서 활성화 함수(softmax)를 거쳐 0~1 사이의 값을 갖고 총 합이 1인 `V`차원의 벡터를 손실함수로 cross-entropy를 사용해 예측값을 결정
+
+### N-gram LM
+- Language Model : 문장에 확률을 할당하는 모델
+- Language Modeling : 주어진 문맥으로부터 모르는 단어를 예측하는 것
+- N-gram LM : 바로 앞의 `n-1`개의 단어를 참고하여 `n`번째 단어를 예측하는 모델
+
 ## Recurrent Neural Network;RNN
 - RNN : 입력과 출력을 sequence(묶음) 단위로 처리하는 모델
 ### 순환 신경망
 - FFNN : 은닉층에서 활성화 함수를 거친 값이 출력층 방향으로만 진행
-- RNN : 은닉층에서 활성화 함수를 거친 값이 출력층 혹은 은닉층 노드로 진행
+- RNN : 은닉층에서 활성화 함수(`tanh`를 주로 사용)를 거친 값이 출력층 혹은 은닉층 노드로 진행
     * Memory Cell;RNN Cell : 은닉층에서 activation function을 거친 값을 내보내면서 이전 시점의 값을 기억하고 이를 입력으로 사용하는 노드
     * Hidden State : t시점의 메모리 셀이 t+1 시점으로 보내는 값
     * RNN Architecture : 각 시점에서 입력과 출력이 동시 혹은 하나만 이루어 지는지에 따라 모델의 종류(구조)가 변함 ![RNN Models](./img/rnn_models.jpg)
@@ -269,27 +282,35 @@ model.add(SimpleRNN(hidden_units, input_shape=(timesteps, input_dim)))
 # model.add(SimpleRNN(hidden_units, input_length=M, input_dim=N)) # 다른 표기
 ```
 - hidden_units : 은닉 상태의 크기를 정의; 메모리 셀이 다음 시점의 메모리 셀과 출력층으로 보내는 값의 크기(ouptut_dim)
-- timesteps : 입력 시퀀스의 길이(input_length)
-- input_dim : 입력 벡터의 차원 수
+- Input : 3D tensor로 입력
+    * batch_size : 한번에 학습하는 데이터의 수; sample의 수
+    * input_dim : 입력 벡터의 차원 수;입력 단어 하나의 길이
+    * timesteps : 입력 시퀀스의 길이(input_length);각 시점에서 단어 하나를 입력으로 받기에, 단어의 모음인 시퀀스의 길이라고 할 수 있음
+- Output : return_sequences의 값에 따라 2D, 3D 결정
+    * batch_size
+    * output_dim : 최종 시점의 은닉 상태인 출력 벡터의 차원 수;출력 단어 하나의 길이
+    * timesteps : 메모리 셀의 각 시점의 은닉 상태값(hidden states)
 - RNN example
 ```python
 import numpy as np
 
-timestpes = 10
-input_dim = 4
-hidden_units = 8
+timestpes = 10 # 시퀀스의 길이
+input_dim = 4 # 단어 벡터의 차원
+hidden_units = 8 # 은닉 상태의 크기 = 메모리 셀의 용량
 
 inputs = np.random.random((timestpes, input_dim))
-hidden_state_t = np.zeros((hidden_units,))
-print("Initial :", hidden_state_t)
+hidden_state_t = np.zeros((hidden_units,)) # 초기 은닉 상태 초기화
+print("Initial Hidden States :", hidden_state_t)
 
-Wx = np.random.random((hidden_units, input_dim))
-Wh = np.random.random((hidden_units, hidden_units))
-b = np.random.random((hidden_units,))
+Wx = np.random.random((hidden_units, input_dim)) # 입력에 대한 가중치 2D 텐서 생성
+Wh = np.random.random((hidden_units, hidden_units)) # 은닉 상태에 대한 가중치 2D 텐서 생성
+b = np.random.random((hidden_units,)) # bias 생성
+
 print("Wx, Wh, b : {}\n\n{}\n\n{}\n\n".format(Wx, Wh, b))
 print("Wx, Wh, b shapes : ",np.shape(Wx), np.shape(Wh), np.shape(b))
 print("\n")
-total_hidden_states = []
+
+total_hidden_states = [] # 모든 시점의 은닉 상태
 
 # dot(arr1, arr2) : 벡터 계산 (arr1, arr2의 원소값들의 곱의 합)
 for input_t in inputs:
@@ -357,17 +378,17 @@ Wx, Wh, b shapes :  (8, 4) (8, 8) (8,)
   0.74679467 0.73196294]]
 ```
 
-- Deep RNN : 은닉층의 개수가 복수인 경우
+- Deep RNN : 은닉층의 개수(깊이)가 복수인 경우
 ```python
 model = Sequential()
 # 첫번째 은닉층을 정의할 때, 각 시점의 값을 다음 은닉층으로 값을 전달하기 위해 retrun_sequences 값을 True로 설정
 model.add(SimpleRNN(hidden_units, input_length=10, input_dim=5, return_sequences=True))
 model.add(SimpleRNN(hidden_units, return_sequences=True))
 ```
-- Biodirectional RNN : 시점 t에서의 출력값을 예측할 때, 이전 시점의 입력뿐만 아니라, 이후 시점의 입력 또한 에측에 기여할 수 있다는 아이디어를 기반으로 기본적으로는 두 개의 메모리 셀을 사용하여 첫번째에서는 Forward States를, 두번째에서는 Backward States를 전달 받아 은닉상태를 계산
+- Bidirectional RNN(양방향 RNN) : 시점 t에서의 출력값을 예측할 때, 이전 시점의 입력뿐만 아니라, 이후 시점의 입력 또한 에측에 기여할 수 있다는 아이디어를 기반으로 기본적으로는 두 개의 메모리 셀을 사용하여 첫번째에서는 Forward States를, 두번째에서는 Backward States를 전달 받아 은닉상태를 계산
 
 ### Long Short-Term Memory;LSTM
-- The problem of long-term dependencies : Vanila RNN은   비교적 짧은 시퀀스에 대해서만 효과를 보임(시점이 길어질 수록 앞의 정보가 뒤로 충분히 전달되지 못하는 현상 발생)
+- The problem of long-term dependencies : Vanila RNN(기본형 RNN)은   비교적 짧은 시퀀스에 대해서만 효과를 보임(시점이 길어질 수록 앞의 정보가 뒤로 충분히 전달되지 못하는 현상 발생)
 - LSTM : 은닉층의 메모리 셀에 입력 게이트, 망각 게이트, 출력 게이트를 추가하여 불필요한 기억은 지우고, 기억해야할 것들을 선정 ![LSTM](./img/LSTM_architecture.jpg)
     * Cell state : 이전 시점의 셀 상태가 다음 시점의 셀 상태를 구하기 위한 입력으로 사용, 삭제 게이트의 값이 0에 가까울 수록 이전 시점의 셀 상태값의 영향력이 작아지고, 입력 게이트의 값이 현 시점의 셀 상태에 영향을 미침(`C_t = f_tㅇC_(t-1) + i_tㅇg_t`) 
         + Entrywise product : 두 행렬에서 같은 위치의 성분끼리의 곱을 통해 얻어지는 행렬
@@ -376,7 +397,69 @@ model.add(SimpleRNN(hidden_units, return_sequences=True))
     * 출력 게이트 : 현재 시점의 x값과 이전 시점의 은닉 상태가 시그모이드 함수를 지난 값으로 현재 시점의 은닉 상태를 결정(`o_t = sigmoid(x_t*W_(xo)+h_(t-1)*W_(ho)), h_t = o_tㅇtanh(c_t)`)
 
 ### Gated Recurrent Unit;GRU
-- GRU : LSTM에서 3개의 게이트를 사용했던 반면, GRU에서는 업데이트 게이트, 리셋 게이트 2개를 사용하여 LSTM의 구조를 간략화 ![GRU](./img/GRU.jpg)
+- GRU : LSTM에서 3개의 게이트(출력, 입력, 삭제)를 사용했던 반면, GRU에서는 업데이트 게이트, 리셋 게이트 2개를 사용하여 LSTM의 구조를 간략화 ![GRU](./img/GRU.jpg)
 
 ### RNN Language Model
 - Teacher Forcing(교사 강요) : 테스트 과정에서 t시점의 출력값이 t+1시점의 입력값으로 들어가도록 하는 RNN model에서, 훈련 과정 중에는 입력에 대한 예측값을 입력으로 하지 않고, 이미 정답을 알고 있는 레이블을 기반으로 훈련하여 훈련 과정을 단축하는 기법, 활성화 함수로는 softmax, 손실 함수로는 cross entropy를 사용
+- Input layer : 특정 시점에서의 입력 단어에 대한 one-hot vector로 입력 받아 입력층의 가중치 행렬을 거쳐 embedding vector를 출력, NNLM과의 차이로는 window로 입력받아 한번에 처리된 lookup table과는 달리, 단어 입력 시점에 따라 입력층의 가중칠 행렬의 변화가 발생하기에 같은 단어에 대한 embedding vector 값이 다를 수 있음
+- Embedding layer(linear) : Projection layer(투사층)의 역할로, 결과로 얻는 벡터를 Embedding vector 라고 함.
+- Hidden layer(non-linear) : 이전 시점의 hidden state를 가중치와 편향을 사용한 선형 결합된 값을 출력하고 이를 활성화 함수(hyperbolic tansent)를 거쳐 현 시점의 hidden state를 생성, 다음 시점의 은닉층의 연산에 사용하거나 출력층으로 전달
+- Output layer : 전달 받은 은닉 상태와 출력층의 가중치를 사용하여 이를 활성화 함수;softmax를 거쳐 각 원소의 값을 0~1 사이의 실수값을 가지며 총 합은 1이 되는 상태로 변환, 실제값에 해당하는 값과 cross-entropy 손실함수를 사용하여 역전파 실시
+- Preprocessing
+```python
+import numpy as np
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.utils import to_categorical
+
+text = """경마장에 있는 말이 뛰고 있다\n
+그의 말이 법이다\n
+가는 말이 고와야 오는 말이 곱다\n"""
+
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts([text])
+vocab_size = len(tokenizer.word_index) + 1
+print("Vocabulary size : %d" %vocab_size) # Vocabulary size : 12
+
+sequences = list()
+for line in text.split('\n'): # \n을 기준으로 문장 토큰화
+    encoded = tokenizer.texts_to_sequences([line])[0]
+    for i in range(1, len(encoded)):
+        sequence = encoded[:i+1]
+        sequences.append(sequence)
+print("Number of samples for training : %d" %len(sequences)) # Number of samples for training : 11
+
+max_len = max(len(s) for s in sequences) # 모든 샘플에서 길이가 가장 긴 샘플의 길이
+
+sequences = pad_sequences(sequences, maxlen=max_len, padding='pre') # label로 사용될 단어들의 길이를 padding을 통해 일치
+
+# label 분리
+sequences = np.array(sequences)
+X = sequences[:, :-1]
+y = sequences[:,-1]
+
+y = to_categorical(y, num_classes=vocab_size)
+```
+---
+### Word Embedding
+- 자연어 처리의 성능에 크게 영향을 미치는 단어(텍스트)를 숫자로 변환하는 과정;벡터화에서 인공 신경망 학습을 통해 단어를 밀집 표현으로 변환하는 방법
+- 단어를 밀집 벡터의 형태로 표현하는 방법
+### Sparse Representation(희소 표현)
+- one-hot-encoding과 같이 대부분의 값이 0으로 표현되는 방법으로 단어의 개수가 늘어나면서 벡터의 차원이 지나치게 커져 공간적 낭비를 일으킴
+- 벡터간의 유의미한 유사성을 표현할 수 없기에, Disributed representation(분산 표현)을 사용해 다차원 공간에 단어의 의미를 벡터화하여 유사성을 벡터화하는 embedding을 사용
+    * 분산 표현 : 비슷한 문맥에서 등장하는 단어들은 비슷한 의미를 가진다는 가정(분포 가설) 하에 주로 함께 등장하는 단어들의 벡터들에 대해 학습하고 의미를 저차원에 벡터의 여러 차원에 분산하여 표현
+### Dense Representation(밀집 표현)
+- 벡터의 차원을 단어 집합의 크기로 상정하지 않고 사용자가 설정한 값으로 모든 단어의 벡터 표현의 차원을 지정하여 실수값으로 표현
+
+### Word2Vec(Word to Vector)
+- 원-핫 벡터와는 달리 단어 벡터 간의 유사도를 반영하여 단어를 수치화하는 방법
+- 다음 단어를 예측하는 NNLM과 달리 Word2Vec은 워드 임베딩을 목적으로 중심 단어를 예측하여 학습하므로 예측 전, 후의 단어들을 모두 참고
+- 은닉층을 제거하여 투사층 다음에 바로 출력층으로 연결하기에 연산량이 줄어 학습속도의 이점
+    * Hierarchical softmax(계층적 소프트맥스)
+    * Negative sampling
+- CBOW(Continuous Bag of Words) : 주변에 있는 단어들을 입력으로 투사층에서 입력 단어 벡터들의 lookup table 평균(input vector * `W`)과 출력층에서의 `W'`을 통해 중간에 있는 단어를 예측
+    * Center word : 예측해야 할 단어
+    * Context word : 예측에 사용되는 단어
+    * Window : 중심 단어를 예측하기 위해서 참고할 단어의 범위로 window=n일 때, center word를 중심으로 앞 뒤의 n개, 총 2n개의 단어를 참고
+    * Sliding window : 윈도우를 옆으로 움직여서 주변 단어와 중심 단어의 선택을 변경해가면서 학습을 위한 데이터 셋을 만드는 방법
+- Skip-Gram : 중간에 있는 단어를 입력으로 주변 단어 2n개를 예측
