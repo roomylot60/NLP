@@ -463,3 +463,83 @@ y = to_categorical(y, num_classes=vocab_size)
     * Window : 중심 단어를 예측하기 위해서 참고할 단어의 범위로 window=n일 때, center word를 중심으로 앞 뒤의 n개, 총 2n개의 단어를 참고
     * Sliding window : 윈도우를 옆으로 움직여서 주변 단어와 중심 단어의 선택을 변경해가면서 학습을 위한 데이터 셋을 만드는 방법
 - Skip-Gram : 중간에 있는 단어를 입력으로 주변 단어 2n개를 예측
+
+### FastText
+- 단어 안에도 여러 단어들이 존재하는 것으로 간주
+- Subword를 고려하여 학습; 단어를 N-gram의 구성으로 취급하여 내부단어 토큰을 벡터화
+- Dataset 내부의 모든 단어의 n-gram이 실시되기에, dataset 양이 충분할 경우 Out Of Vocabulary(OOV)에 대해서도 다른 단어와의 유사도를 계산 가능
+- 등장 빈도 수가 적은 단어(rare words)에 대해 비교적 높은 임베딩 벡터값을 얻음
+- 노이즈가 많은 코퍼스에서 강점을 가짐; 훈련 코퍼스에 오타나 맞춤법이 틀린 단어가 있을 경우의 임베딩 가능
+```python
+from gensim.models import FastText
+
+model = FastText(result, size=100, window=5, min_count=5, workers=4, sg=1)
+
+model.wv.most_similar("electrofishing")
+```
+```bash
+[('electrolux', 0.7934642434120178), ('electrolyte', 0.78279709815979), ('electro', 0.779127836227417), ('electric', 0.7753111720085144), ('airbus', 0.7648627758026123), ('fukushima', 0.7612422704696655), ('electrochemical', 0.7611693143844604), ('gastric', 0.7483425140380859), ('electroshock', 0.7477173805236816), ('overfishing', 0.7435552477836609)]
+```
+- 한국어에서의 FastText
+    * 음절 단위
+    * 자모 단위(초성, 중성, 종성)
+
+### Pre-trained Word Embedding
+- Keras에서의 Embedding() : 인공 신경망 구조 관점에서 embedding layer를 제공
+    * Embedding Layer는 look-up table(=weight matrix) : 입력 시퀀스의 각 단어들은 모두 정수 인코딩(index)되어 임베딩 층을 거쳐 밀집 벡터(dense vector=embedding vector)로 mapping, 밀집 벡터는 인공 신경망의 학습 과정에서 가중치가 학습되는 것과 같은 방식(역전파)으로 훈련
+    * Embedding layer 사용
+    ```python
+    # Preprocessing
+    import numpy as np
+    from tensorflow.keras.preprocessing.text import Tokenizer
+    from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+    sentences = ['nice great best amazing','stop lies','pitiful nerd','excellent work','supreme quality','bad','highly respectable']
+    y_train = [1,0,0,1,1,0,1]
+
+    tokenizer = Tokenizer()
+    tokenizer.fit_on_texts(sentences)
+    vocab_size = len(tokenizer.word_index) + 1
+
+    X_encoded = tokenizer.texts_to_sequences(sentences)
+    print('Encoding to integer : ', X_encoded)
+    # 정수 인코딩 결과 : [[1, 2, 3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13], [14, 15]]
+
+    max_len = max(len(l) for l in X_encoded) # 샘플의 최대 길이
+    X_train = pad_sequences(X_encoded, maxlen=max_len, padding='post') # post(뒤)에 패딩
+    y_train = np.array(y_train)
+    ```
+    ```bash
+    패딩 결과 :
+    [[ 1  2  3  4]
+    [ 5  6  0  0]
+    [ 7  8  0  0]
+    [ 9 10  0  0]
+    [11 12  0  0]
+    [13  0  0  0]
+    [14 15  0  0]]
+    ```
+    ```python
+    # Binary Classification Model
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import Embedding, Dense, Flatten
+
+    embedding_dim = 4
+    
+    model = Sequential()
+    model.add(Embedding(vocab_size, embedding_dim, input_length=max_len))
+    model.add(Flatten())
+    model.add(Dense(1, activation='sigmoid'))
+
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
+    model.fit(X_train, y_train, epochs=100, verbose=2)
+    ```
+- Pre-trained word embbedding
+    * GloVe
+    * Word2Vec
+
+### Embeddings from Language Model;ELMo
+- 완전히 다른 의미를 갖는 같은 단어에 대해 기존의 모델들의 임베딩 벡터들은 제대로 반영 불가
+- 같은 표기의 단어라도 문맥에 따라서 다르게 워드 임베딩을 할 수 있음(Contextualized Word Embedding)
+
+### Bidirectional Language Model;biLM
