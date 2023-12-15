@@ -539,7 +539,14 @@ model.wv.most_similar("electrofishing")
     * Word2Vec
 
 ### Embeddings from Language Model;ELMo
+- 언어 모델로 하는 임베딩으로 사전 훈련된 언어 모델을 활용
 - 완전히 다른 의미를 갖는 같은 단어에 대해 기존의 모델들의 임베딩 벡터들은 제대로 반영 불가
 - 같은 표기의 단어라도 문맥에 따라서 다르게 워드 임베딩을 할 수 있음(Contextualized Word Embedding)
 
 ### Bidirectional Language Model;biLM
+- 은닉층이 최소 2개 이상의 다층 구조를 가지며 토큰화된 문장으로 CNN을 이용한 문자 임베딩을 통해 얻은 단어 벡터를 입력, 순방향과 역방향의 언어모델을 사용 ![biLM](./img/biLM.png)
+    1. 각 층의 출력값을 concatenate
+    2. 각 층의 출력값 별로 가중치 부여
+    3. 각 층의 출력값의 합을 출력
+    4. 벡터의 크기를 결정하는 스칼라 매개 변수를 곱하여 ELMo representation을 도출
+- 양방향 RNN에서는 순방향의 Hidden State과 역방향의 Hidden State을 concatenate하여 다음층의 입력으로 사용하고, biLM은 각각을 별개의 모델로 학습
