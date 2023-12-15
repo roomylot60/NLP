@@ -18,7 +18,9 @@
 - Pooling layer : 특성 맵을 다운 샘플링하여 특성 맵의 크기를 줄이는 pooling 연산을 진행하는 층으로, 다운 샘플링 과정에서 커널과 스트라이드를 사용하나 합성곱 층과는 달리 학습할 가중치 값을 가지지 않음
     * Max pooling : 특성 맵과 커널과 겹치는 영역에서의 최댓값을 추출
     * Average pooling : 특성 맵과 커널과 겹치는 영역에서의 평균값을 추출
+
 ---
+
 ### 1D Convolution
 - 자연어 처리에 사용
 - LSTM에서 문장은 embedding layer를 거쳐 각 단어가 embedding vector로 변환되어 LSTM의 입력으로 사용
@@ -26,7 +28,9 @@
 - Max pooling : 1D CNN의 Pooling layer에서 주로 사용하는 pooling. 각 합성곱 연산으로부터 얻은 결과 벡터에서 가장 큰 값을 가진 스칼라 값을 추출하는 연산
 *의문점*
 - 1D CNN을 사용한 신경망 구성에 있어서 여러 종류의 커널을 사용하는 이유는 무엇일까
+
 ### Keras CNN Example
+
 ```python
 from tensorflow.keras.layers import Conv1D, GlobalMaxPooling1D
 
@@ -38,6 +42,7 @@ model.add(Conv1D(num_filters, kernel_size, padding='valid', activation='relu'))
 # activation : 활성화 함수
 model.add(GlobalMaxPooling1D())
 ```
+
 ### Character Embedding(문자 임베딩)
 - 단어의 어구를 사용하여 입력된 단어의 뜻을 예측
 - 1D CNN을 사용하여 임베딩할 경우, 문자의 N-gram에서 정보를 추출
