@@ -23,6 +23,7 @@ model.add(SimpleRNN(hidden_units, input_shape=(timesteps, input_dim)))
 - 지도 학습을 통해 이루어지는 분류 작업
     * Named Entity Recognition(개체명 인식) : 이름(의미)을 갖는 개체를 보고 해당 단어(개체)의 유형 파악
         + Named Entity Recognition using NTLK example
+        
         ```python
         from nltk import word_tokenize, pos_tag, ne_chunk
 
