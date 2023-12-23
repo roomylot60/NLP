@@ -125,5 +125,10 @@
         ```
 
     * WordPiece Tokenizer : BPE의 변형 알고리즘 중 하나로, BPE가 빈도수에 기반하여 가장 많이 등장한 쌍을 병합하는 것과는 달리, 병합되었을 때 corpus의 Likelihood(우도)를 가장 높이는 쌍을 병합; 띄어쓰기를 사용하여 subword들을 구분하고, '_'를 사용하여 기존 문장의 띄어쓰기를 구분
-- Sentence Piece
-- Huggingface's Tokenizers
+- Sentence Piece : 내부 단어 분리를 위한 패키지로, pretokenization 없이 전처리를 하지 않은 raw data에 바로 단어 분리 토크나이저를 사용할 수 있어 언어에 종속되지 않도록 BPE 알고리즘과 Unigram LM Tokenizer를 구현
+- Subword Text Encoder : Tensorflow를 통해 사용할 수 있는 Subword Tokenizer로 Wordpiece Model을 채택
+- Huggingface's Tokenizers : 자주 등장하는 서브워드들을 하나의 토큰으로 취급하는 다양한 Subword Tokenizer를 제공
+    * BertWordPieceTokenizer : 허깅페이스에서 구현한 BERT 모델의 WordPiece Tokenizer로 tokenizers 패키지를 통해 제공
+    * CharBPETokenizer : 오리지널 BPE
+    * ByteLevelBPETokenizer : BPE의 Byte level 버전
+    * SentencePieceBPETokenizer : SentencePiece BPE 구현체
